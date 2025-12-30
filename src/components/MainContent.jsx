@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Search, Play, Music, Loader2 } from 'lucide-react';
 
 const MainContent = ({ onTrackSelect }) => {
-  // Start with an empty array so .filter() never fails
+  // Initialize as an empty array to prevent filtering errors
   const [tracks, setTracks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ const MainContent = ({ onTrackSelect }) => {
       try {
         setLoading(true);
         const response = await axios.get(`${BACKEND_URL}/tracks`);
-        // Only set tracks if we actually got an array back
+        // Only set tracks if the response is actually an array
         if (response.data && Array.isArray(response.data)) {
           setTracks(response.data);
         } else {
@@ -31,7 +31,7 @@ const MainContent = ({ onTrackSelect }) => {
     fetchTracks();
   }, []);
 
-  // Safety check: ensure tracks is an array before filtering
+  // Bulletproof filter logic
   const filteredTracks = (Array.isArray(tracks) ? tracks : []).filter(track => 
     track.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     track.artist?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -40,14 +40,14 @@ const MainContent = ({ onTrackSelect }) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-zinc-500">
-        <Loader2 className="animate-spin mb-4" size={32} />
+        <Loader2 className="animate-spin mb-4 text-green-500" size={32} />
         <p>Loading your music library...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 pb-24">
+    <div className="p-8 pb-24 h-full overflow-y-auto bg-black">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-bold text-white">Explore Music</h2>
         <div className="relative w-72">
