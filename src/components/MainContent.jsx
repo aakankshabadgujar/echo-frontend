@@ -39,10 +39,12 @@ const MainContent = ({ onTrackSelect }) => {
   }, []);
 
   // 3. Safe filter logic: check Array.isArray to prevent crashes during renders
-  const filteredTracks = (Array.isArray(tracks) ? tracks : []).filter(track => 
-    track.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    track.artist?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // This prevents the "o.filter is not a function" crash if 'tracks' is not an array
+const filteredTracks = Array.isArray(tracks) 
+  ? tracks.filter(track => 
+      track.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  : [];
 
   return (
     <div className="p-8 pb-24 min-h-full">
