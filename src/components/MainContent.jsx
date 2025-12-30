@@ -26,11 +26,13 @@ const MainContent = ({ onTrackSelect }) => {
     fetchTracks();
   }, []);
 
-  // Safe filter logic to prevent "filter is not a function"
-  const filteredTracks = tracks.filter(track => 
-    track.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    track.artist?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // The "Array.isArray" check prevents the "o.filter is not a function" crash
+const filteredTracks = Array.isArray(tracks) 
+  ? tracks.filter(track => 
+      track.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      track.artist?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  : []; // Fallback to an empty list if data is missing
 
   if (loading) return <div className="p-8 text-zinc-500">Loading your music...</div>;
 
