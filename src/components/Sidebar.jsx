@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Home, Search, Library, Plus, 
-  Heart, ListMusic, Music2, Loader2 
+  Heart, ListMusic, Loader2, LogOut 
 } from 'lucide-react';
 
-const Sidebar = ({ onSelectCategory, onSelectPlaylist }) => {
+const Sidebar = ({ onSelectCategory, onSelectPlaylist, onSelectHome, onLogout }) => {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -14,7 +14,6 @@ const Sidebar = ({ onSelectCategory, onSelectPlaylist }) => {
   const BACKEND_URL = "https://echo-backend-0rw1.onrender.com";
   const token = localStorage.getItem('token');
 
-  // Fetch playlists on component mount
   useEffect(() => {
     fetchPlaylists();
   }, []);
@@ -24,7 +23,7 @@ const Sidebar = ({ onSelectCategory, onSelectPlaylist }) => {
       const response = await axios.get(`${BACKEND_URL}/playlists`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setPlaylists(response.data);
+      setPlaylists(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("Failed to fetch playlists:", err);
     }
@@ -44,7 +43,7 @@ const Sidebar = ({ onSelectCategory, onSelectPlaylist }) => {
       setNewPlaylistName('');
       setIsCreating(false);
     } catch (err) {
-      alert("Failed to create playlist. Make sure you are logged in.");
+      alert("Failed to create playlist.");
     } finally {
       setLoading(false);
     }
@@ -55,14 +54,14 @@ const Sidebar = ({ onSelectCategory, onSelectPlaylist }) => {
       {/* Navigation Section */}
       <div className="bg-zinc-900 rounded-lg p-4 space-y-4">
         <div 
-          onClick={() => onSelectCategory('home')}
+          onClick={onSelectHome}
           className="flex items-center gap-4 text-zinc-400 hover:text-white cursor-pointer transition group"
         >
-          <Home size={24} className="group-hover:scale-110 transition" />
+          <Home size={24} />
           <span className="font-semibold">Home</span>
         </div>
         <div className="flex items-center gap-4 text-zinc-400 hover:text-white cursor-pointer transition group">
-          <Search size={24} className="group-hover:scale-110 transition" />
+          <Search size={24} />
           <span className="font-semibold">Search</span>
         </div>
       </div>
@@ -82,62 +81,45 @@ const Sidebar = ({ onSelectCategory, onSelectPlaylist }) => {
           </button>
         </div>
 
-        {/* Create Playlist Form */}
         {isCreating && (
           <form onSubmit={handleCreatePlaylist} className="px-4 mb-4">
             <input 
               autoFocus
               className="w-full bg-zinc-800 border border-zinc-700 rounded-md p-2 text-sm text-white focus:border-green-500 outline-none"
-              placeholder="Playlist Name"
+              placeholder="New Playlist Name"
               value={newPlaylistName}
               onChange={(e) => setNewPlaylistName(e.target.value)}
             />
             <div className="flex justify-end gap-2 mt-2">
-              <button 
-                type="button" 
-                onClick={() => setIsCreating(false)}
-                className="text-xs text-zinc-400 hover:text-white"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="text-xs bg-green-500 text-black px-3 py-1 rounded-full font-bold hover:scale-105 transition"
-              >
+              <button type="submit" disabled={loading} className="text-xs bg-green-500 text-black px-3 py-1 rounded-full font-bold">
                 {loading ? <Loader2 size={12} className="animate-spin" /> : "Create"}
               </button>
             </div>
           </form>
         )}
 
-        {/* Playlists List */}
         <div className="flex-1 overflow-y-auto px-2 space-y-1">
-          <div className="flex items-center gap-3 p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-md cursor-pointer transition group">
-            <div className="bg-gradient-to-br from-purple-700 to-blue-300 p-2 rounded">
-              <Heart size={20} fill="white" className="text-white" />
-            </div>
-            <span className="text-sm font-medium">Liked Songs</span>
-          </div>
-
           {playlists.map((playlist) => (
             <div 
               key={playlist.id}
               onClick={() => onSelectPlaylist(playlist)}
               className="flex items-center gap-3 p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-md cursor-pointer transition"
             >
-              <div className="bg-zinc-800 p-2 rounded">
-                <ListMusic size={20} className="text-zinc-400" />
-              </div>
+              <ListMusic size={20} />
               <span className="text-sm font-medium truncate">{playlist.name}</span>
             </div>
           ))}
-          
-          {playlists.length === 0 && !isCreating && (
-            <div className="p-4 text-center">
-              <p className="text-xs text-zinc-500">Create your first playlist using the + button.</p>
-            </div>
-          )}
+        </div>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-zinc-800">
+          <button 
+            onClick={onLogout}
+            className="flex items-center gap-3 text-zinc-400 hover:text-red-500 transition w-full"
+          >
+            <LogOut size={20} />
+            <span className="text-sm font-medium">Logout</span>
+          </button>
         </div>
       </div>
     </div>
