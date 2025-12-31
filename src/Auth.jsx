@@ -5,12 +5,12 @@ import { Music, User, Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 const Auth = ({ onLoginSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState(''); // Added to fix NotNullViolation
+  const [email, setEmail] = useState(''); // State to capture email
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // --- LIVE RENDER URL ---
+  // --- ENSURE THIS URL MATCHES YOUR RENDER BACKEND ---
   const BACKEND_URL = "https://echo-backend-0rw1.onrender.com";
 
   const handleSubmit = async (e) => {
@@ -18,31 +18,36 @@ const Auth = ({ onLoginSuccess }) => {
     setError('');
     setLoading(true);
 
-    // Prepare payload: email is MANDATORY for registration
+    // TRIM inputs to prevent trailing space errors
     const payload = isLogin 
-      ? { username, password } 
-      : { username, email, password };
+      ? { 
+          username: username.trim(), 
+          password: password.trim() 
+        } 
+      : { 
+          username: username.trim(), 
+          email: email.trim(), 
+          password: password.trim() 
+        };
 
     try {
       const endpoint = isLogin ? '/login' : '/register';
-      const response = await axios.post(`${BACKEND_URL}${endpoint}`, payload, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await axios.post(`${BACKEND_URL}${endpoint}`, payload);
 
       if (isLogin) {
         // Successful login: store token and notify App.jsx
         localStorage.setItem('token', response.data.access_token);
-        localStorage.setItem('username', username);
+        localStorage.setItem('username', username.trim());
         onLoginSuccess();
       } else {
         // Successful registration: switch to login view
         setIsLogin(true);
-        alert("Account created successfully! Please sign in with your new credentials.");
+        alert("Account created successfully! Please sign in.");
       }
     } catch (err) {
       console.error("Auth Error details:", err.response?.data);
-      // Display the specific error from the backend if available
-      setError(err.response?.data?.error || "Authentication failed. Check your connection or details.");
+      // Display specific backend error (like the NotNullViolation message)
+      setError(err.response?.data?.error || "Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +89,7 @@ const Auth = ({ onLoginSuccess }) => {
             </div>
           </div>
 
-          {/* Email - ONLY shown for Registration */}
+          {/* Email - Only visible during Registration */}
           {!isLogin && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-zinc-400 ml-1">Email Address</label>
@@ -96,7 +101,7 @@ const Auth = ({ onLoginSuccess }) => {
                   className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-green-500 transition-all text-white"
                   placeholder="name@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)} // Correctly binds email state
                 />
               </div>
             </div>
