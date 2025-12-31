@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
+import Sidebar from './components/SideBar';
 import MainContent from './components/MainContent';
 import Player from './components/Player';
 import Auth from './Auth';
