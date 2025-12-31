@@ -1,42 +1,144 @@
-import React from 'react';
-import { Home, Library, Heart, LogOut, Music } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { 
+  Home, Search, Library, Plus, 
+  Heart, ListMusic, Music2, Loader2 
+} from 'lucide-react';
 
-const Sidebar = ({ onLogout }) => {
-  const navItems = [
-    { icon: <Home size={22} />, label: 'Home', active: true },
-    { icon: <Library size={22} />, label: 'Your Library', active: false },
-    { icon: <Heart size={22} />, label: 'Liked Songs', active: false },
-  ];
+const Sidebar = ({ onSelectCategory, onSelectPlaylist }) => {
+  const [playlists, setPlaylists] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+
+  const BACKEND_URL = "https://echo-backend-0rw1.onrender.com";
+  const token = localStorage.getItem('token');
+
+  // Fetch playlists on component mount
+  useEffect(() => {
+    fetchPlaylists();
+  }, []);
+
+  const fetchPlaylists = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/playlists`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPlaylists(response.data);
+    } catch (err) {
+      console.error("Failed to fetch playlists:", err);
+    }
+  };
+
+  const handleCreatePlaylist = async (e) => {
+    e.preventDefault();
+    if (!newPlaylistName.trim()) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.post(`${BACKEND_URL}/playlists`, 
+        { name: newPlaylistName },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      setPlaylists([...playlists, response.data]);
+      setNewPlaylistName('');
+      setIsCreating(false);
+    } catch (err) {
+      alert("Failed to create playlist. Make sure you are logged in.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="w-64 bg-black h-full flex flex-col border-r border-zinc-800">
-      <div className="p-6 mb-4 flex items-center gap-2 text-green-500">
-        <Music size={32} />
-        <span className="text-2xl font-bold text-white">Echo</span>
+    <div className="w-64 bg-black h-full flex flex-col gap-2 p-2 border-r border-zinc-800">
+      {/* Navigation Section */}
+      <div className="bg-zinc-900 rounded-lg p-4 space-y-4">
+        <div 
+          onClick={() => onSelectCategory('home')}
+          className="flex items-center gap-4 text-zinc-400 hover:text-white cursor-pointer transition group"
+        >
+          <Home size={24} className="group-hover:scale-110 transition" />
+          <span className="font-semibold">Home</span>
+        </div>
+        <div className="flex items-center gap-4 text-zinc-400 hover:text-white cursor-pointer transition group">
+          <Search size={24} className="group-hover:scale-110 transition" />
+          <span className="font-semibold">Search</span>
+        </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2">
-        {navItems.map((item, idx) => (
-          <button
-            key={idx}
-            className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
-              item.active ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
-            }`}
+      {/* Library & Playlists Section */}
+      <div className="bg-zinc-900 rounded-lg flex-1 overflow-hidden flex flex-col">
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-zinc-400">
+            <Library size={24} />
+            <span className="font-semibold">Your Library</span>
+          </div>
+          <button 
+            onClick={() => setIsCreating(!isCreating)}
+            className="text-zinc-400 hover:text-white hover:bg-zinc-800 p-1 rounded-full transition"
           >
-            {item.icon}
-            <span className="font-medium">{item.label}</span>
+            <Plus size={20} />
           </button>
-        ))}
-      </nav>
+        </div>
 
-      <div className="p-4 border-t border-zinc-800">
-        <button
-          onClick={onLogout}
-          className="w-full flex items-center gap-4 px-4 py-3 text-zinc-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-        >
-          <LogOut size={22} />
-          <span className="font-medium">Logout</span>
-        </button>
+        {/* Create Playlist Form */}
+        {isCreating && (
+          <form onSubmit={handleCreatePlaylist} className="px-4 mb-4">
+            <input 
+              autoFocus
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-md p-2 text-sm text-white focus:border-green-500 outline-none"
+              placeholder="Playlist Name"
+              value={newPlaylistName}
+              onChange={(e) => setNewPlaylistName(e.target.value)}
+            />
+            <div className="flex justify-end gap-2 mt-2">
+              <button 
+                type="button" 
+                onClick={() => setIsCreating(false)}
+                className="text-xs text-zinc-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="text-xs bg-green-500 text-black px-3 py-1 rounded-full font-bold hover:scale-105 transition"
+              >
+                {loading ? <Loader2 size={12} className="animate-spin" /> : "Create"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Playlists List */}
+        <div className="flex-1 overflow-y-auto px-2 space-y-1">
+          <div className="flex items-center gap-3 p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-md cursor-pointer transition group">
+            <div className="bg-gradient-to-br from-purple-700 to-blue-300 p-2 rounded">
+              <Heart size={20} fill="white" className="text-white" />
+            </div>
+            <span className="text-sm font-medium">Liked Songs</span>
+          </div>
+
+          {playlists.map((playlist) => (
+            <div 
+              key={playlist.id}
+              onClick={() => onSelectPlaylist(playlist)}
+              className="flex items-center gap-3 p-2 text-zinc-400 hover:bg-zinc-800/50 rounded-md cursor-pointer transition"
+            >
+              <div className="bg-zinc-800 p-2 rounded">
+                <ListMusic size={20} className="text-zinc-400" />
+              </div>
+              <span className="text-sm font-medium truncate">{playlist.name}</span>
+            </div>
+          ))}
+          
+          {playlists.length === 0 && !isCreating && (
+            <div className="p-4 text-center">
+              <p className="text-xs text-zinc-500">Create your first playlist using the + button.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
